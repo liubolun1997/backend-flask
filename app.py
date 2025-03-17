@@ -439,7 +439,8 @@ def get_course_students(course_id):
             students_data.append({
                 'id': student.id,
                 'username': student.username,
-                'grades': grades_data
+                'grades': grades_data,
+                'password': "bolun liu 24235597"
             })
 
         return jsonify(students_data)
