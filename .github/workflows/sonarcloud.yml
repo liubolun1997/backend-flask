@@ -1,92 +1,67 @@
-name: SonarQube Analysis
+name: SonarQube Backend Analysis
 
 on:
   push:
-    branches: [ main, dev, production, master ]
+    branches: [main, dev, production, master]
+    paths:
+      - './**'  # 仅后端目录变更时触发
   pull_request:
-    branches: [ production, dev, test, master ]
+    branches: [production, dev, test,master]
     types: [opened, synchronize, reopened]
+    paths:
+      - './**'
 
 jobs:
-  sonarqube:
-    name: SonarQube Scan
+  sonarqube-backend:
+    name: Backend Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Setup backend test structure
+      # 初始化测试目录
+      - name: Setup test structure
         run: |
           mkdir -p ./tests
           touch ./tests/__init__.py
           mv ./test_app.py ./tests/
 
-      - name: Create sonar properties
-        run: |
-          cat > sonar-project.properties << 'EOL'
-          sonar.projectName=LMS System
-          sonar.sources=frontend-react/src,backend-flask
-          sonar.tests=frontend-react/src/__tests__,backend-flask/tests
-          sonar.exclusions=**/node_modules/**,**/*.test.js,**/*.test.tsx,**/tests/**,**/coverage/**
-          sonar.test.inclusions=**/*.test.js,**/*.test.tsx,**/test_*.py
-          sonar.python.coverage.reportPaths=backend-flask/coverage.xml
-          sonar.javascript.lcov.reportPaths=frontend-react/coverage/lcov.info
-          sonar.sourceEncoding=UTF-8
-          sonar.python.version=3.10
-          EOL
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend-react/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend-react
-        run: npm ci
-
-      - name: Run frontend test
-        working-directory: frontend-react
-        run: npm test -- --coverage --watchAll=false --ci
-
-      - name: Create sonar properties
-        run: |
-          cat > sonar-project.properties << 'EOL'
-          sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          sonar.projectName=LMS System
-          sonar.sources=frontend-react/src,backend-flask
-          sonar.tests=frontend-react/src/__tests__,backend-flask/tests
-          sonar.exclusions=**/node_modules/**,**/*.test.js,**/*.test.tsx,**/tests/**,**/coverage/**
-          sonar.test.inclusions=**/*.test.js,**/*.test.tsx,**/test_*.py
-          sonar.python.coverage.reportPaths=backend-flask/coverage.xml
-          sonar.javascript.lcov.reportPaths=frontend-react/coverage/lcov.info
-          sonar.sourceEncoding=UTF-8
-          sonar.python.version=3.10
-          EOL
-
+      # 后端依赖安装与测试
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         working-directory: backend-flask
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run backend tests with coverage
+      - name: Run tests with coverage
         working-directory: backend-flask
         run: |
           python -m pytest tests/ --cov=. --cov-report=xml --cov-report=term-missing
 
+      # 生成后端专属 Sonar 配置
+      - name: Create sonar properties
+        run: |
+          cat > sonar-project.properties << 'EOL'
+          sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          sonar.projectKey=BACKEND_PROJECT_KEY  # 替换为后端项目的唯一 Key
+          sonar.projectName=LMS Backend
+          sonar.sources=./
+          sonar.tests=./tests
+          sonar.exclusions=**/tests/**,**/coverage/**
+          sonar.test.inclusions=**/test_*.py
+          sonar.python.coverage.reportPaths=./coverage.xml
+          sonar.sourceEncoding=UTF-8
+          sonar.python.version=3.10
+          EOL
+
+      # 执行 Sonar 扫描
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_BACKEND_TOKEN }}  # 需单独生成后端 Token
