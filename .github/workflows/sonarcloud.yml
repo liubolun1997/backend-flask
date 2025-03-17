@@ -19,9 +19,9 @@ jobs:
 
       - name: Setup backend test structure
         run: |
-          mkdir -p backend-flask/tests
-          touch backend-flask/tests/__init__.py
-          mv backend-flask/test_app.py backend-flask/tests/
+          mkdir -p ./tests
+          touch ./tests/__init__.py
+          mv ./test_app.py backend-flask/tests/
 
       - name: Create sonar properties
         run: |
