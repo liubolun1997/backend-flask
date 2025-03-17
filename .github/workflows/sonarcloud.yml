@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir -p ./tests
           touch ./tests/__init__.py
-          mv ./test_app.py backend-flask/tests/
+          mv ./test_app.py ./tests/
 
       - name: Create sonar properties
         run: |
