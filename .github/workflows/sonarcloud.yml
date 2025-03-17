@@ -35,7 +35,22 @@ jobs:
           sonar.sourceEncoding=UTF-8
           sonar.python.version=3.10
           EOL
-
+          
+      - name: Create sonar properties
+        run: |
+          cat > sonar-project.properties << 'EOL'
+          sonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+          sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          sonar.projectName=LMS System
+          sonar.sources=./
+          sonar.tests=./tests
+          sonar.exclusions=**/node_modules/**,**/*.test.js,**/*.test.tsx,**/tests/**,**/coverage/**
+          sonar.test.inclusions=**/*.test.js,**/*.test.tsx,**/test_*.py
+          sonar.python.coverage.reportPaths=./coverage.xml
+          sonar.sourceEncoding=UTF-8
+          sonar.python.version=3.10
+          EOL
+          
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
